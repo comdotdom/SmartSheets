@@ -18,7 +18,7 @@ sys.path.insert(0, os.path.abspath('../..'))
 # -- Project information -----------------------------------------------------
 
 project = 'Smartsheets Audit'
-copyright = '2021, Dominic Gittins, Speedy Services'
+copyright = '2021, Dominic Gittins'
 author = 'Dominic Gittins'
 
 # The full version, including alpha/beta/rc tags

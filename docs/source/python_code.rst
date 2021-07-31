@@ -7,5 +7,5 @@ Python Module
 .. todo:: For the Audit user ... write back to SmartsheetAudit workspace,
           creating a folder for each workspace containing the audit results - sheet audit, board audit, report audit
 
-.. automodule:: SpeedySheets
+.. automodule:: SmartsheetAudit
    :members:
