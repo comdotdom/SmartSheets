@@ -22,7 +22,8 @@ so that we don't inadvertently create data privacy or confidentiality issues.
 
 Links
 -----
-`Smartsheet API documentation <https://smartsheet.redoc.ly>`_
+   * `Smartsheet API documentation <https://smartsheet.redoc.ly>`_
+   * `Smartsheet Python SDK documentation <http://smartsheet-platform.github.io/smartsheet-python-sdk/index.html>`_
 
 .. toctree::
    :maxdepth: 2
