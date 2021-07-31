@@ -1,0 +1,6 @@
+envparse==0.2.0
+requests==2.26.0
+smartsheet-python-sdk==2.105.1
+Sphinx==4.1.2
+sphinx-rtd-theme==0.5.2
+tqdm==4.61.2
