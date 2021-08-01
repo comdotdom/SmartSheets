@@ -135,7 +135,7 @@ class SmartContainer:
         Orchestrates an audit of all SmartCollections (Sheets, Dashboards, Reports) in this
         SmartContainer and saves the results in the ``audit_report`` property
         """
-        #sheets
+        # SHEETS
         for s in tqdm(self.sheets):
             sht = self.smart.Sheets.get_sheet(sheet_id=s.id, include='ownerInfo,crossSheetReferences')
             coltitles = [c.title for c in sht.columns]
@@ -157,6 +157,30 @@ class SmartContainer:
                 "column_titles": coltitles
             }
             self.audit_report['sheets'].append(audit_result)
+        # -------------------------------------------------------------------------------------------------------
+        # REPORTS
+        for r in tqdm(self.reports):
+            rpt = self.smart.Reports.get_report(report_id=r.id, include='ownerInfo,crossSheetReferences')
+            coltitles = [c.title for c in rpt.columns]
+
+            source_sheet_names = [s.name for s in rpt.source_sheets]
+
+            if len(cross_sheet_ref_sheet_ids)==0:
+                cross_sheet_ref_sheet_names = None
+
+            audit_result = {
+                "id": rpt.id,
+                "name": rpt.name,
+                "owner": rpt.owner,
+                "source_sheets": source_sheet_names,
+                "created_at": rpt.created_at,
+                "modified_at": rpt.modified_at,
+                "permalink": rpt.permalink,
+                "total_row_count":rpt.total_row_count,
+                "column_titles": coltitles
+            }
+            self.audit_report['reports'].append(audit_result)
+        # =======================================================================================================
         pprint(self.audit_report)
 
     def save_audit_to_smartsheets(self):
