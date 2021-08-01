@@ -32,10 +32,14 @@ class SmartsheetAudit:
         self.smart = smartsheet.Smartsheet()
         response = self.smart.Workspaces.list_workspaces(include_all=True)
         self.workspaces = response.data
+        sheet_list = self.smart.Sheets.list_sheets(include_all=True)
+        for s in sheet_list.data:
+            SHEET_NAME_MAP[s.id] = s.name
         for w in self.workspaces:
             wkspce = SmartContainer(container_id=w.id)
             w = wkspce
-            print(w)
+            print(w.name)
+            w.audit()
         # self.sheets = Sheets()
         # self.boards = Dashboards()
         # self.reports = Reports()
@@ -89,7 +93,6 @@ class SmartContainer:
         self.reports = None
         self.sights = None
         self.folders = []
-        self.audit_report: dict = {}
 
         if self.parent:
             self.container_type = 'folder'
@@ -116,12 +119,45 @@ class SmartContainer:
             for fldr in self._container.folders:
                 self.folders.append(SmartContainer(container_id=fldr.id, parent=self.container_path))
 
+        self.audit_report: dict = {
+            "container_id": container_id,
+            "name": self.name,
+            "container_type": self.container_type,
+            "container_path": self.container_path,
+            "sheets": [],
+            "reports": [],
+            "dashboards": [],
+            "folders": []
+        }
+
     def audit(self):
         """
         Orchestrates an audit of all SmartCollections (Sheets, Dashboards, Reports) in this
         SmartContainer and saves the results in the ``audit_report`` property
         """
-        pass
+        #sheets
+        for s in tqdm(self.sheets):
+            sht = self.smart.Sheets.get_sheet(sheet_id=s.id, include='ownerInfo,crossSheetReferences')
+            coltitles = [c.title for c in sht.columns]
+            cross_sheet_ref_sheet_ids = set([x.source_sheet_id for x in sht.cross_sheet_references])
+            cross_sheet_ref_sheet_names = [SHEET_NAME_MAP[x] for x in cross_sheet_ref_sheet_ids]
+
+            if len(cross_sheet_ref_sheet_ids)==0:
+                cross_sheet_ref_sheet_names = None
+
+            audit_result = {
+                "id": sht.id,
+                "name": sht.name,
+                "owner": sht.owner,
+                "cross_sheet_references": cross_sheet_ref_sheet_names,
+                "created_at": sht.created_at,
+                "modified_at": sht.modified_at,
+                "permalink": sht.permalink,
+                "total_row_count":sht.total_row_count,
+                "column_titles": coltitles
+            }
+            self.audit_report['sheets'].append(audit_result)
+        pprint(self.audit_report)
 
     def save_audit_to_smartsheets(self):
         """
@@ -160,4 +196,4 @@ class SmartCollection:
 
 
 if __name__ == '__main__':
-    sma = SmartSheetAudit()
+    sma = SmartsheetAudit()
