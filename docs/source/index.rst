@@ -20,11 +20,6 @@ it does not add considerable business value to do so, and the more cluttered the
 It is also important that we do not store copies of any of the actual data contained in the audited objects,
 so that we don't inadvertently create data privacy or confidentiality issues.
 
-Links
------
-   * `Smartsheet API documentation <https://smartsheet.redoc.ly>`_
-   * `Smartsheet Python SDK documentation <http://smartsheet-platform.github.io/smartsheet-python-sdk/index.html>`_
-
 .. warning::
    Work in Progress - do not imagine that everything works !
 
@@ -32,6 +27,11 @@ Links
 
    The code and the documentation have been published to support discussion about what we're doing and why,
    not because they are finished.
+
+Links
+-----
+   * `Smartsheet API documentation <https://smartsheet.redoc.ly>`_
+   * `Smartsheet Python SDK documentation <http://smartsheet-platform.github.io/smartsheet-python-sdk/index.html>`_
 
 .. toctree::
    :maxdepth: 2
@@ -44,6 +44,7 @@ Links
    python_code
    SmartsheetAudit2
    python_stack
+   glossary
 
 Indices and tables
 ==================
