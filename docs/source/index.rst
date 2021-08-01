@@ -25,6 +25,14 @@ Links
    * `Smartsheet API documentation <https://smartsheet.redoc.ly>`_
    * `Smartsheet Python SDK documentation <http://smartsheet-platform.github.io/smartsheet-python-sdk/index.html>`_
 
+.. warning::
+   Work in Progress - do not imagine that everything works !
+
+   The code is in flux - we are still making key decisions about how best to execute the objectives.
+
+   The code and the documentation have been published to support discussion about what we're doing and why,
+   not because they are finished.
+
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
