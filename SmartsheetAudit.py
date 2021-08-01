@@ -190,9 +190,17 @@ class Dashboards:
     """
 
     def __init__(self):
+        env.read_envfile('smartsheets.env')
+        self.smart = smartsheet.Smartsheet()
+        response = self.smart.Sights.list_sights(include_all=True)
+        self.boards = response.data
+
         self.url = "https://api.smartsheet.com/2.0/sights"
         self.headers = {f"Authorization": f"Bearer {env('SMARTSHEET_ACCESS_TOKEN')}", }
         self.boards = []
+
+    def print_list(self):
+        pprint([(b.id, b.name) for b in self.boards])
 
     def api_get_boards(self):
         try:
@@ -288,18 +296,20 @@ class Reports:
         response = self.smart.Reports.list_reports(include_all=True)
         self.reports = response.data
 
-    def print_list(self):
-        pprint([(r.id, r.name) for r in self.reports])
+    @property
+    def listing(self):
+        return [(r.id, r.name) for r in self.reports]
+
+
 
     def save_reports_audit(self, filename):
         print("\nauditing reports ...\n")
         filepath = f"{env('TEXT_FOLDER')}/{filename}"
-        audit_file_header = "id|name|workspace|sourceSheets|" \
-                            "createdAt|modifiedAt|permalink|" \
-                            "rowCount|columnTitles"
+        report_audit_header = (
+        'id', 'name', 'workspace', 'sourceSheets', 'createdAt', 'modifiedAt', 'permalink', 'rowCount', 'columnTitles')
 
         with open(filepath, 'w') as writer:
-            writer.write(f"{audit_file_header}\n")
+            writer.write(f"{'|'.join(report_audit_header)}\n")
             for r in tqdm(self.reports):
                 rpt = Report(r.id)
                 writer.write(f"{rpt.audit_items()}\n")
@@ -307,7 +317,7 @@ class Reports:
             print(f"\naudit data saved to {filepath} ({len(self.reports)} records)")
 
 
-class Report(smartsheet.Smartsheet.models.Report):
+class Report():
     """Individual Smartsheets report object"""
 
     def __init__(self, report_id):
@@ -331,12 +341,7 @@ class Report(smartsheet.Smartsheet.models.Report):
 
 
 if __name__ == '__main__':
-    app = SmartSheetAudit()
-    app.run()
-    # rpts = Reports()
-    # for r in rpts.reports:
-    #     rpt = Report(r.id)
-    #     print(rpt.audit_items())
-
-
-
+    # app = SmartSheetAudit()
+    # app.run()
+    rpts = Reports()
+    pprint(rpts.listing)
