@@ -180,6 +180,40 @@ class SmartContainer:
                 "column_titles": coltitles
             }
             self.audit_report['reports'].append(audit_result)
+        # -------------------------------------------------------------------------------------------------------
+        # DASHBOARDS
+        for d in tqdm(self.sights):
+            dash = self.smart.Sights.get_sight(sight_id=d.id)
+            widget_titles = []
+            widget_source_sheet_ids = set()
+            widget_source_sheet_names = []
+            # analyse widgets
+            for w in dash.widgets:
+                if hasattr(w, 'title'):
+                    widget_titles.append(w.title)
+                if hasattr(w.contents, 'sheetId'):
+                    widget_source_sheet_ids.add(w.contents.sheetId)
+            if len(widget_source_sheet_ids) > 0:
+                for sid in widget_source_sheet_ids:
+                    widget_source_sheet_names.append(SHEET_NAME_MAP.get(sid))
+
+            audit_result = {
+                "id"             : dash.id,
+                "name"           : dash.name,
+                "widget_source_sheets"  : widget_source_sheet_names,
+                "created_at"     : dash.created_at,
+                "modified_at"    : dash.modified_at,
+                "permalink"      : dash.permalink,
+                "widget_count":    len(dash.widgets),
+                "widget_titles"  : widget_titles
+            }
+
+            self.audit_report['dashboards'].append(audit_result)
+        """
+        deets = f"{self.id}|{self.name}|{self.workspace.get('name')}|{self.widget_sheet_names}|" \
+                f"{self.createdAt}|{self.modifiedAt}|{self.permalink}|" \
+                f"{self.widget_count}|{self.widget_titles}"
+        """
         # =======================================================================================================
         pprint(self.audit_report)
 
