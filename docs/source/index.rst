@@ -30,6 +30,7 @@ Links
    :caption: Contents:
 
    devplans
+   devnotes
    audit_file
    project_status
    python_code
