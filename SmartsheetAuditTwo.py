@@ -1,15 +1,16 @@
 import json
-import logging
-import os
+# import logging
+# import os
 from pprint import pprint
-import requests
 from envparse import env
 from tqdm import tqdm
 import smartsheet
+from slugify import slugify
+from datetime import datetime
 
 
 SHEET_NAME_MAP = {}
-
+JSON_FOLDER = ''
 
 
 class SmartsheetAudit:
@@ -29,6 +30,7 @@ class SmartsheetAudit:
     """
     def __init__(self):
         env.read_envfile('smartsheets.env')
+        JSON_FOLDER = env('JSON_FOLDER')
         self.smart = smartsheet.Smartsheet()
         response = self.smart.Workspaces.list_workspaces(include_all=True)
         self.workspaces = response.data
@@ -41,34 +43,13 @@ class SmartsheetAudit:
             wkspce = SmartContainer(container_id=w.id)
             w = wkspce
             w.audit()
-        # self.sheets = Sheets()
-        # self.boards = Dashboards()
-        # self.reports = Reports()
-
-    def run(self):
-        """Runs the full audit process:
-
-              #. Calls the API to get a  full listing of all the sheets visible to the API key owner
-              #. Creates mappings dicts for sheet name/id lookup
-              #. Audits each sheet and saves the results into a specified pipe delimited text file
-              #. Calls the API to get a full listing of all the dashboards visible to the API key owner
-              #. Audits them each in turn and saves the results to a specified pipe delimited text file
-
-        .. todo:: Separately audit local objects (no workspace) and each individual workspace
-        .. todo:: Dynamic file naming based on workspace
-        """
-
-        # Sheets
-        self.sheets.api_get_sheets()
-        self.sheets.create_sheet_maps()
-        self.sheets.save_sheets_audit('ss_sheets_audit_test.txt')
-
-        # Dashboards
-        self.boards.api_get_boards()
-        self.boards.save_boards_audit('ss_dashboards_audit_test.txt')
-
-        # Reports
-        self.reports.save_reports_audit('ss_reports_audit_test.txt')
+            audit_date = datetime.now().strftime("%Y%m%d%H%M%S")
+            # print(w.name)
+            filename = f"{JSON_FOLDER}/{slugify(w.name)}-{audit_date}.json"
+            # print(filename)
+            # print(w.audit_report)
+            with open(filename, 'w') as f:
+                json.dump(w.audit_report, f)
 
 
 class SmartContainer:
@@ -151,8 +132,8 @@ class SmartContainer:
                 "name": sht.name,
                 "owner": sht.owner,
                 "cross_sheet_references": cross_sheet_ref_sheet_names,
-                "created_at": sht.created_at,
-                "modified_at": sht.modified_at,
+                "created_at": sht.created_at.isoformat(),
+                "modified_at": sht.modified_at.isoformat(),
                 "permalink": sht.permalink,
                 "total_row_count":sht.total_row_count,
                 "column_titles": coltitles
@@ -166,16 +147,16 @@ class SmartContainer:
 
             source_sheet_names = [s.name for s in rpt.source_sheets]
 
-            if len(cross_sheet_ref_sheet_ids)==0:
-                cross_sheet_ref_sheet_names = None
+            # if len(cross_sheet_ref_sheet_ids)==0:
+            #     cross_sheet_ref_sheet_names = None
 
             audit_result = {
                 "id": rpt.id,
                 "name": rpt.name,
                 "owner": rpt.owner,
                 "source_sheets": source_sheet_names,
-                "created_at": rpt.created_at,
-                "modified_at": rpt.modified_at,
+                "created_at": rpt.created_at.isoformat(),
+                "modified_at": rpt.modified_at.isoformat(),
                 "permalink": rpt.permalink,
                 "total_row_count":rpt.total_row_count,
                 "column_titles": coltitles
@@ -202,8 +183,8 @@ class SmartContainer:
                 "id"             : dash.id,
                 "name"           : dash.name,
                 "widget_source_sheets"  : widget_source_sheet_names,
-                "created_at"     : dash.created_at,
-                "modified_at"    : dash.modified_at,
+                "created_at"     : dash.created_at.isoformat(),
+                "modified_at"    : dash.modified_at.isoformat(),
                 "permalink"      : dash.permalink,
                 "widget_count":    len(dash.widgets),
                 "widget_titles"  : widget_titles
@@ -217,15 +198,12 @@ class SmartContainer:
             f = fldr
             f.audit()
             self.audit_report['folders'].append(f.audit_report)
-        # =======================================================================================================
-        pprint(self.audit_report)
 
     def save_audit_to_smartsheets(self):
         """
         Future development: Save the audit report up to a dedicated (or specified) Smartsheet
         """
         pass
-
 
 class SmartCollection:
     """
