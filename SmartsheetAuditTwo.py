@@ -12,22 +12,21 @@ SHEET_NAME_MAP = {}
 
 
 
-class SmartSheetAudit:
+class SmartsheetAudit:
     """
-    Audit runner - this is the class used to run a Smartsheet audit.
+    **Audit runner** - this is the class used to run a Smartsheet audit.
 
     Uses environment variables for API key and local filepaths
 
     Instantiates SmartContainer (Workspace) objects to orchestrate their respective audits.
 
-    Usage
-    -----
+    **Usage**
+
     .. code-block:: python
 
        app = SmartSheetAudit()
        app.run()
     """
-
     def __init__(self):
         env.read_envfile('smartsheets.env')
         self.smart = smartsheet.Smartsheet()
@@ -83,9 +82,15 @@ class SmartContainer:
     which returns the audit_results as a dict.
     """
 
-    def __init__(self, parent: str = None, container_id: int = None):
+    def __init__(self, container_id: int, parent: str = None):
         self.smart = smartsheet.Smartsheet()
         self.parent: str = parent
+        self.sheets = None
+        self.reports = None
+        self.sights = None
+        self.folders = []
+        self.audit_report: dict = {}
+
         if self.parent:
             self.container_type = 'folder'
             self._container = self.smart.Folders.get_folder(folder_id=container_id)
@@ -96,9 +101,6 @@ class SmartContainer:
             self.container_path = self._container.name
         self.name: str = self._container.name
         self.id: int = self._container.id
-        self.sheets = None
-        self.reports = None
-        self.sights = None
         # Sheets
         if hasattr(self._container, 'sheets'):
             self.sheets = self._container.sheets
@@ -113,8 +115,6 @@ class SmartContainer:
             """needs bit of thinking - for loop creates a list of SmartContainers, from each child folder_id"""
             for fldr in self._container.folders:
                 self.folders.append(SmartContainer(container_id=fldr.id, parent=self.container_path))
-
-        self.audit_report: dict = {}
 
     def audit(self):
         """

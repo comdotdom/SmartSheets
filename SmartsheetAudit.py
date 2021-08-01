@@ -357,8 +357,10 @@ class SmartContainer:
     """
 
     def __init__(self, parent=""):
-        self.parent: str = ""
-        self.container_path: str = ""
+        self.parent: str = ''
+        self.container_type: str = ''
+        self.container_path: str = ''
+        # container_path = parent / name
         self.audit_report: dict = {}
 
     def audit(self):
