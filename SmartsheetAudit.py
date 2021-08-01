@@ -339,6 +339,7 @@ class Report():
                 f"{[c.title for c in self.report.columns]}"
         return deets
 
+
 class SmartContainer:
     """
     Workspaces and Folders can contain folders, sheets, dashboards and reports.
@@ -356,9 +357,9 @@ class SmartContainer:
     """
 
     def __init__(self, parent=""):
-        self.parent = ""
-        self.container_path = ""
-        self.audit_report = {}
+        self.parent: str = ""
+        self.container_path: str = ""
+        self.audit_report: dict = {}
 
     def audit(self):
         """
@@ -368,9 +369,10 @@ class SmartContainer:
         pass
 
     def save_audit_to_smartsheets(self):
-        """Future development: Save the audit report up to a dedicated (or specified) Smartsheet"""
+        """
+        Future development: Save the audit report up to a dedicated (or specified) Smartsheet
+        """
         pass
-
 
 
 class SmartCollection:
@@ -387,9 +389,18 @@ class SmartCollection:
     and builds up a dict for each object. It collects those dicts in a list.
 
     That list is the put into an audit_report dict which contains information about the SmartCollection itself,
-    as well as all the audit reports."""
+    as well as all the audit reports.
+    """
 
     def __init__(self):
+        self.collection_type: str = ''
+        self.container_path: str = ''
+        self.audit_report: dict = {}
+
+    def audit(self):
+        """
+        Carry out data governance audit of this SmartCollection's objects and store the results in ``audit_report``
+        """
         pass
 
 
