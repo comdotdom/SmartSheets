@@ -32,13 +32,14 @@ class SmartsheetAudit:
         self.smart = smartsheet.Smartsheet()
         response = self.smart.Workspaces.list_workspaces(include_all=True)
         self.workspaces = response.data
+        # CREATE GLOBAL SHEET_NAME_MAP LOOKUP
         sheet_list = self.smart.Sheets.list_sheets(include_all=True)
         for s in sheet_list.data:
             SHEET_NAME_MAP[s.id] = s.name
+
         for w in self.workspaces:
             wkspce = SmartContainer(container_id=w.id)
             w = wkspce
-            print(w.name)
             w.audit()
         # self.sheets = Sheets()
         # self.boards = Dashboards()
@@ -136,7 +137,7 @@ class SmartContainer:
         SmartContainer and saves the results in the ``audit_report`` property
         """
         # SHEETS
-        for s in tqdm(self.sheets):
+        for s in tqdm(self.sheets, f"sheets in '{self.container_path}'"):
             sht = self.smart.Sheets.get_sheet(sheet_id=s.id, include='ownerInfo,crossSheetReferences')
             coltitles = [c.title for c in sht.columns]
             cross_sheet_ref_sheet_ids = set([x.source_sheet_id for x in sht.cross_sheet_references])
@@ -159,7 +160,7 @@ class SmartContainer:
             self.audit_report['sheets'].append(audit_result)
         # -------------------------------------------------------------------------------------------------------
         # REPORTS
-        for r in tqdm(self.reports):
+        for r in tqdm(self.reports, f"reports in '{self.container_path}'"):
             rpt = self.smart.Reports.get_report(report_id=r.id, include='ownerInfo,crossSheetReferences')
             coltitles = [c.title for c in rpt.columns]
 
@@ -182,7 +183,7 @@ class SmartContainer:
             self.audit_report['reports'].append(audit_result)
         # -------------------------------------------------------------------------------------------------------
         # DASHBOARDS
-        for d in tqdm(self.sights):
+        for d in tqdm(self.sights, f"dashboards in '{self.container_path}'"):
             dash = self.smart.Sights.get_sight(sight_id=d.id)
             widget_titles = []
             widget_source_sheet_ids = set()
@@ -209,11 +210,13 @@ class SmartContainer:
             }
 
             self.audit_report['dashboards'].append(audit_result)
-        """
-        deets = f"{self.id}|{self.name}|{self.workspace.get('name')}|{self.widget_sheet_names}|" \
-                f"{self.createdAt}|{self.modifiedAt}|{self.permalink}|" \
-                f"{self.widget_count}|{self.widget_titles}"
-        """
+        # -------------------------------------------------------------------------------------------------------
+        # FOLDERS
+        for f in self.folders:
+            fldr = SmartContainer(container_id=f.id, parent=self.container_path)
+            f = fldr
+            f.audit()
+            self.audit_report['folders'].append(f.audit_report)
         # =======================================================================================================
         pprint(self.audit_report)
 
