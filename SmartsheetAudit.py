@@ -339,6 +339,59 @@ class Report():
                 f"{[c.title for c in self.report.columns]}"
         return deets
 
+class SmartContainer:
+    """
+    Workspaces and Folders can contain folders, sheets, dashboards and reports.
+
+    SmartContainer is a base class which may be a Workspace or a Folder,
+    but which provides the audit orchestration functionality required of a SmartCollection,
+    and the audit_results property to store the results of the audit.
+
+    A SmartContainer will have a ``container_path`` property which shows a breadcrumb trail
+    of its own folder structure - starting at the ultimate parent Workspace.
+
+    (Data Governance) Audits are actually carried out by SmartCollections (Sheets, Dashboards and Reports).
+    The audit method of a SmartContainer calls the audit method of a SmartCollection,
+    which returns the audit_results as a dict.
+    """
+
+    def __init__(self, parent=""):
+        self.parent = ""
+        self.container_path = ""
+        self.audit_report = {}
+
+    def audit(self):
+        """
+        Orchestrates an audit of all SmartCollections (Sheets, Dashboards, Reports) in this
+        SmartContainer and saves the results in the ``audit_report`` property
+        """
+        pass
+
+    def save_audit_to_smartsheets(self):
+        """Future development: Save the audit report up to a dedicated (or specified) Smartsheet"""
+        pass
+
+
+
+class SmartCollection:
+    """
+    Sheets, Dashboard and Reports are all examples of SmartCollections.
+
+    They are the built by calling the Smartsheets API (via the SDK) and contain all the
+    sheet, dashboard or report objects in scope.
+
+    A SmartContainer will have its own SmartCollections for each of the three object types
+    (as long as objects of that type exist in the container !)
+
+    The audit method of a SmartCollection gathers specific facts about each object in the collection
+    and builds up a dict for each object. It collects those dicts in a list.
+
+    That list is the put into an audit_report dict which contains information about the SmartCollection itself,
+    as well as all the audit reports."""
+
+    def __init__(self):
+        pass
+
 
 if __name__ == '__main__':
     # app = SmartSheetAudit()
