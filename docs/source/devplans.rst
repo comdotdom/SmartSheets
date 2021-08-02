@@ -2,12 +2,14 @@ Development Plans
 =================
 Result Storage
 --------------
-In early versions, the audit will save its results as a pipe-delimited text file on the computer it is being run from.
+In early versions, the audit will save its results on the computer it is being run from.
+
 In later versions it is our intention to write audit results back to Smartsheets.
 
 Smartsheets account
 -------------------
 This was initially developed using a regular user's API key.
+
 We ought to have a user set up with read only access to all the workspaces we want to audit.
 This system user account would only exist for the purposes of auditing our Smartsheets portfolio.
 When we want to audit a workspace, the workspace owner grants r/o only access to the audit account. this could be permanent to allow regular audit updates, or temporary to increase data security.
