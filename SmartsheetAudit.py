@@ -1,3 +1,12 @@
+"""
+SmartsheetAudit
+
+:author:  Dominic Gittins
+:contact: dominic@gittins.co.uk
+:version: 0.2
+:date:    02-Aug-2021
+"""
+
 import json
 # import logging
 # import os
@@ -17,9 +26,12 @@ class SmartsheetAudit:
     """
     **Audit runner** - this is the class used to run a Smartsheet audit.
 
-    Uses environment variables for API key and local filepaths
+    Creates a list of all the workspaces visible to the API key owner and
+    sets up a SmartContainer for each workspace.
 
-    Instantiates SmartContainer (Workspace) objects to orchestrate their respective audits.
+    Instructs the SmartContainer to audit the workspace and saves the results.
+
+    Uses environment variables for API key and local filepaths
 
     **Usage**
 
@@ -44,28 +56,24 @@ class SmartsheetAudit:
             w = wkspce
             w.audit()
             audit_date = datetime.now().strftime("%Y%m%d%H%M%S")
-            # print(w.name)
             filename = f"{JSON_FOLDER}/{slugify(w.name)}-{audit_date}.json"
-            # print(filename)
-            # print(w.audit_report)
             with open(filename, 'w') as f:
                 json.dump(w.audit_report, f)
 
 
 class SmartContainer:
     """
-    Workspaces and Folders can contain folders, sheets, dashboards and reports.
+    Workspaces and Folders can contain sheets, dashboards, reports and folders.
 
     SmartContainer is a base class which may be a Workspace or a Folder,
-    but which provides the audit orchestration functionality required of a SmartCollection,
+    but which adds metadata collection (audit) capability,
     and the audit_results property to store the results of the audit.
 
     A SmartContainer will have a ``container_path`` property which shows a breadcrumb trail
     of its own folder structure - starting at the ultimate parent Workspace.
 
-    (Data Governance) Audits are actually carried out by SmartCollections (Sheets, Dashboards and Reports).
-    The audit method of a SmartContainer calls the audit method of a SmartCollection,
-    which returns the audit_results as a dict.
+    Running the ``audit`` method conducts a data governance audit of the workspace
+    and stores its results in the ``audit_report`` dict property.
     """
 
     def __init__(self, container_id: int, parent: str = None):
@@ -95,11 +103,10 @@ class SmartContainer:
         # Dashboards
         if hasattr(self._container, 'sights'):
             self.sights = self._container.sights
-
+        # Folders
         if hasattr(self._container, 'folders'):
-            """needs bit of thinking - for loop creates a list of SmartContainers, from each child folder_id"""
             for fldr in self._container.folders:
-                self.folders.append(SmartContainer(container_id=fldr.id, parent=self.container_path))
+                self.folders.append(fldr)
 
         self.audit_report: dict = {
             "container_id": container_id,
@@ -117,30 +124,35 @@ class SmartContainer:
         Orchestrates an audit of all SmartCollections (Sheets, Dashboards, Reports) in this
         SmartContainer and saves the results in the ``audit_report`` property
         """
-        # SHEETS
+        self.audit_sheets()
+        self.audit_reports()
+        self.audit_dashboards()
+        self.audit_folders()
+
+    def audit_sheets(self):
         for s in tqdm(self.sheets, f"sheets in '{self.container_path}'"):
             sht = self.smart.Sheets.get_sheet(sheet_id=s.id, include='ownerInfo,crossSheetReferences')
             coltitles = [c.title for c in sht.columns]
             cross_sheet_ref_sheet_ids = set([x.source_sheet_id for x in sht.cross_sheet_references])
             cross_sheet_ref_sheet_names = [SHEET_NAME_MAP[x] for x in cross_sheet_ref_sheet_ids]
 
-            if len(cross_sheet_ref_sheet_ids)==0:
+            if len(cross_sheet_ref_sheet_ids) == 0:
                 cross_sheet_ref_sheet_names = None
 
             audit_result = {
-                "id": sht.id,
-                "name": sht.name,
-                "owner": sht.owner,
+                "id"                    : sht.id,
+                "name"                  : sht.name,
+                "owner"                 : sht.owner,
                 "cross_sheet_references": cross_sheet_ref_sheet_names,
-                "created_at": sht.created_at.isoformat(),
-                "modified_at": sht.modified_at.isoformat(),
-                "permalink": sht.permalink,
-                "total_row_count":sht.total_row_count,
-                "column_titles": coltitles
+                "created_at"            : sht.created_at.isoformat(),
+                "modified_at"           : sht.modified_at.isoformat(),
+                "permalink"             : sht.permalink,
+                "total_row_count"       : sht.total_row_count,
+                "column_titles"         : coltitles
             }
             self.audit_report['sheets'].append(audit_result)
-        # -------------------------------------------------------------------------------------------------------
-        # REPORTS
+
+    def audit_reports(self):
         for r in tqdm(self.reports, f"reports in '{self.container_path}'"):
             rpt = self.smart.Reports.get_report(report_id=r.id, include='ownerInfo,crossSheetReferences')
             coltitles = [c.title for c in rpt.columns]
@@ -151,19 +163,19 @@ class SmartContainer:
             #     cross_sheet_ref_sheet_names = None
 
             audit_result = {
-                "id": rpt.id,
-                "name": rpt.name,
-                "owner": rpt.owner,
-                "source_sheets": source_sheet_names,
-                "created_at": rpt.created_at.isoformat(),
-                "modified_at": rpt.modified_at.isoformat(),
-                "permalink": rpt.permalink,
-                "total_row_count":rpt.total_row_count,
-                "column_titles": coltitles
+                "id"             : rpt.id,
+                "name"           : rpt.name,
+                "owner"          : rpt.owner,
+                "source_sheets"  : source_sheet_names,
+                "created_at"     : rpt.created_at.isoformat(),
+                "modified_at"    : rpt.modified_at.isoformat(),
+                "permalink"      : rpt.permalink,
+                "total_row_count": rpt.total_row_count,
+                "column_titles"  : coltitles
             }
             self.audit_report['reports'].append(audit_result)
-        # -------------------------------------------------------------------------------------------------------
-        # DASHBOARDS
+
+    def audit_dashboards(self):
         for d in tqdm(self.sights, f"dashboards in '{self.container_path}'"):
             dash = self.smart.Sights.get_sight(sight_id=d.id)
             widget_titles = []
@@ -180,19 +192,18 @@ class SmartContainer:
                     widget_source_sheet_names.append(SHEET_NAME_MAP.get(sid))
 
             audit_result = {
-                "id"             : dash.id,
-                "name"           : dash.name,
-                "widget_source_sheets"  : widget_source_sheet_names,
-                "created_at"     : dash.created_at.isoformat(),
-                "modified_at"    : dash.modified_at.isoformat(),
-                "permalink"      : dash.permalink,
-                "widget_count":    len(dash.widgets),
-                "widget_titles"  : widget_titles
+                "id"                  : dash.id,
+                "name"                : dash.name,
+                "widget_source_sheets": widget_source_sheet_names,
+                "created_at"          : dash.created_at.isoformat(),
+                "modified_at"         : dash.modified_at.isoformat(),
+                "permalink"           : dash.permalink,
+                "widget_count"        : len(dash.widgets),
+                "widget_titles"       : widget_titles
             }
-
             self.audit_report['dashboards'].append(audit_result)
-        # -------------------------------------------------------------------------------------------------------
-        # FOLDERS
+
+    def audit_folders(self):
         for f in self.folders:
             fldr = SmartContainer(container_id=f.id, parent=self.container_path)
             f = fldr
@@ -202,34 +213,6 @@ class SmartContainer:
     def save_audit_to_smartsheets(self):
         """
         Future development: Save the audit report up to a dedicated (or specified) Smartsheet
-        """
-        pass
-
-class SmartCollection:
-    """
-    Sheets, Dashboard and Reports are all examples of SmartCollections.
-
-    They are the built by calling the Smartsheets API (via the SDK) and contain all the
-    sheet, dashboard or report objects in scope.
-
-    A SmartContainer will have its own SmartCollections for each of the three object types
-    (as long as objects of that type exist in the container !)
-
-    The audit method of a SmartCollection gathers specific facts about each object in the collection
-    and builds up a dict for each object. It collects those dicts in a list.
-
-    That list is the put into an audit_report dict which contains information about the SmartCollection itself,
-    as well as all the audit reports.
-    """
-
-    def __init__(self):
-        self.collection_type: str = ''
-        self.container_path: str = ''
-        self.audit_report: dict = {}
-
-    def audit(self):
-        """
-        Carry out data governance audit of this SmartCollection's objects and store the results in ``audit_report``
         """
         pass
 
