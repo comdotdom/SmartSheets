@@ -5,7 +5,7 @@ Modules
 -------
 
 :envparse: Handles environment variables (API key)
-:smartsheet: Smartsheet Python SDK
+:smartsheet-python-sdk: Smartsheet Python SDK
 :sphinx: Documentation framework
 :sphinx-rtd-theme: Read the Docs theme for Sphinx
 :python-slugify: Convert strings with capital letters and spaces into kebab-case: 'Data Management' becomes 'data-management'
