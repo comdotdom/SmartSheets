@@ -50,6 +50,7 @@ Project Links
    change_log
    python_code
    python_stack
+   initial_setup
    glossary
 
 Indices and tables
