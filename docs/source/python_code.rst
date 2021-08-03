@@ -1,8 +1,6 @@
 Python Module
 =============
 
-.. todo:: For the Audit user ... write back to SmartsheetAudit workspace
-
 .. automodule:: SmartsheetAudit
 .. autoclass::  SmartsheetAudit
    :members:
