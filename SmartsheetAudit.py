@@ -38,7 +38,6 @@ class SmartsheetAudit:
     .. code-block:: python
 
        app = SmartSheetAudit()
-       app.run()
     """
     def __init__(self):
         env.read_envfile('smartsheets.env')
@@ -63,7 +62,10 @@ class SmartsheetAudit:
 
 class SmartContainer:
     """
-    Workspaces and Folders can contain sheets, dashboards, reports and folders.
+    :param container_id: The workspace_id or folder_id we are going to audit
+    :param parent: The container_path of the calling SmartContainer (left blank when called for a workspace)
+
+    Workspaces and Folders can contain sheets, dashboards, reports and (sub-)folders.
 
     SmartContainer is a base class which may be a Workspace or a Folder,
     but which adds metadata collection (audit) capability,
@@ -77,6 +79,9 @@ class SmartContainer:
     """
 
     def __init__(self, container_id: int, parent: str = None):
+        """
+        Gets listings of all the sheets, dashboards, reports and folders in this container from the smartsheet API.
+        """
         self.smart = smartsheet.Smartsheet()
         self.parent: str = parent
         self.sheets = None
@@ -122,7 +127,9 @@ class SmartContainer:
     def audit(self):
         """
         Orchestrates an audit of all SmartCollections (Sheets, Dashboards, Reports) in this
-        SmartContainer and saves the results in the ``audit_report`` property
+        SmartContainer and saves the results in the ``audit_report`` property.
+
+        Cycles through any sub-folders of this SmartContainer, stores their audit results in ``audit_report`` too.
         """
         self.audit_sheets()
         self.audit_reports()
@@ -130,6 +137,10 @@ class SmartContainer:
         self.audit_folders()
 
     def audit_sheets(self):
+        """
+
+        :return:
+        """
         for s in tqdm(self.sheets, f"sheets in '{self.container_path}'"):
             sht = self.smart.Sheets.get_sheet(sheet_id=s.id, include='ownerInfo,crossSheetReferences')
             coltitles = [c.title for c in sht.columns]
