@@ -45,13 +45,14 @@ Project Links
    :maxdepth: 2
    :caption: Contents:
 
-   devplans
+   dev_only/devplans
+   initial_setup
    audit_file
-   change_log
    python_code
    python_stack
-   initial_setup
+   data_definitions
    glossary
+   change_log
 
 Indices and tables
 ==================

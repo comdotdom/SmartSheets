@@ -1,6 +1,4 @@
 """
-SmartsheetAudit
-
 :author:  Dominic Gittins
 :contact: dominic@gittins.co.uk
 :version: 0.2
@@ -81,6 +79,17 @@ class SmartContainer:
     def __init__(self, container_id: int, parent: str = None):
         """
         Gets listings of all the sheets, dashboards, reports and folders in this container from the smartsheet API.
+
+        Sets up an empty ``audit_report``, which the ``audit`` methods will populate.
+
+         :container_id:    smartsheet id of the workspace/folder
+         :name:            name of the workspace/folder
+         :container_type:  ``workspace`` or ``folder``
+         :container_path:  breadcrumb string from top workspace e.g. 'Data Workspace/Level1 Folder/Sub-Folder'
+         :sheets:          a list of sheet type ``audit_results``
+         :reports:         a list of report type ``audit_results``
+         :dashboards:      a list of dashboard type ``audit_results``
+         :folders:         a list of folder ``audit_reports``
         """
         self.smart = smartsheet.Smartsheet()
         self.parent: str = parent
@@ -138,8 +147,19 @@ class SmartContainer:
 
     def audit_sheets(self):
         """
+        Audits the sheet objects in the workspace/folder
 
-        :return:
+        Appends an ``audit_result`` (below) to ``audit_report['sheets']`` for each sheet found.
+
+        :id:                     smartsheet id of the sheet
+        :name:                   name of the sheet
+        :owner:                  email address of sheet owner
+        :cross_sheet_references: list of cross sheet reference sheet names (in square brackets)
+        :created_at:             sheet created datetime (in ISO format)
+        :modified_at:            last modified datetime (in ISO format)
+        :permalink:              permalink (url) of the sheet
+        :total_row_count:        count of rows in the sheet
+        :column_titles:          list of the column names (in square brackets)
         """
         for s in tqdm(self.sheets, f"sheets in '{self.container_path}'"):
             sht = self.smart.Sheets.get_sheet(sheet_id=s.id, include='ownerInfo,crossSheetReferences')
@@ -164,6 +184,21 @@ class SmartContainer:
             self.audit_report['sheets'].append(audit_result)
 
     def audit_reports(self):
+        """
+        Audits the **report** objects in the workspace/folder.
+
+        Appends an ``audit_result`` (below) to ``audit_report['reports']`` for each report found.
+
+        :id:                     smartsheet id of the report
+        :name:                   name of the report
+        :owner:                  email address of report owner
+        :source_sheets:          list of source sheet names (in square brackets)
+        :created_at:             report created datetime (in ISO format)
+        :modified_at:            last modified datetime (in ISO format)
+        :permalink:              permalink (url) of the report
+        :total_row_count:        count of rows in the report
+        :column_titles:          list of the column names (in square brackets)
+        """
         for r in tqdm(self.reports, f"reports in '{self.container_path}'"):
             rpt = self.smart.Reports.get_report(report_id=r.id, include='ownerInfo,crossSheetReferences')
             coltitles = [c.title for c in rpt.columns]
@@ -187,6 +222,20 @@ class SmartContainer:
             self.audit_report['reports'].append(audit_result)
 
     def audit_dashboards(self):
+        """
+        Audits the dashboard objects in the workspace/folder
+
+        Appends an ``audit_result`` (below) to audit_report['dashboards'] for every dashboard found.
+
+        :id:                     smartsheet id of the dashboard
+        :name:                   name of the dashboard
+        :widget_source_sheets:   list of widget source sheet names (in square brackets)
+        :created_at:             dashboard created datetime (in ISO format)
+        :modified_at:            last modified datetime (in ISO format)
+        :permalink:              permalink (url) of the dashboard
+        :widget_count:           count of widgets in the dashboard
+        :widget_titles:          list of widget titles - for those widgets that have a title (in square brackets)
+        """
         for d in tqdm(self.sights, f"dashboards in '{self.container_path}'"):
             dash = self.smart.Sights.get_sight(sight_id=d.id)
             widget_titles = []
@@ -215,6 +264,11 @@ class SmartContainer:
             self.audit_report['dashboards'].append(audit_result)
 
     def audit_folders(self):
+        """
+        Audits any folders found within the workspace/folder.
+
+        Appends a full ``audit_report`` to ``audit_report['folders']`` for each folder found.
+        """
         for f in self.folders:
             fldr = SmartContainer(container_id=f.id, parent=self.container_path)
             f = fldr

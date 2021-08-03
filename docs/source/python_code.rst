@@ -1,5 +1,5 @@
-Python Module
-=============
+SmartsheetAudit Module
+======================
 
 .. automodule:: SmartsheetAudit
 .. autoclass::  SmartsheetAudit
@@ -10,5 +10,3 @@ Python Module
    :members:
    :undoc-members:
    :special-members: __init__
-
-.. py:attribute:: audit_report
